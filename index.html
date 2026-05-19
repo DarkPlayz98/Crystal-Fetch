@@ -47,7 +47,7 @@
                 <svg class="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </div>
             <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-teal-300 tracking-tight">CrystalFetch</h1>
-            <p class="text-slate-400 text-sm mt-2 font-medium">Decentralized Serverless Core</p>
+            <p class="text-slate-400 text-sm mt-2 font-medium">OceanSaver Engine Active</p>
         </div>
 
         <div class="glass p-6 md:p-8 relative overflow-hidden">
@@ -86,13 +86,6 @@
         document.getElementById('year').textContent = new Date().getFullYear();
         let format = 'mp4';
 
-        // 🟢 The Decentralized Proxy Cluster
-        const PROXY_NODES = [
-            'https://pipedapi.kavin.rocks',
-            'https://pipedapi.tokhmi.xyz',
-            'https://api.piped.projectsegfau.lt'
-        ];
-
         function setFormat(f) {
             format = f;
             const slideBg = document.getElementById('slide-bg');
@@ -119,59 +112,62 @@
             const status = document.getElementById('status');
             const urlInput = document.getElementById('url').value;
             
-            btnText.textContent = "Routing through Proxies...";
+            // Map the format specifically for OceanSaver (720 ensures the video has audio muxed in)
+            const apiFormat = format === 'mp4' ? '720' : 'mp3';
+
+            btnText.textContent = "Booting Engine...";
             btnLoader.classList.remove('hidden');
             btnIcon.classList.add('hidden');
             btn.disabled = true;
             btn.classList.add('opacity-80', 'cursor-not-allowed');
-            status.classList.add('hidden');
+            status.classList.remove('hidden');
+            status.textContent = "⏳ Initializing connection...";
+            status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-blue-300 bg-blue-500/10 border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)] block transition-all";
 
             try {
-                // 1. Extract Video ID natively in the browser
-                const videoIdMatch = urlInput.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/|.*vi=|.*u\/\w\/|embed\/|v=))([^#\&\?]*).*/);
-                const videoId = (videoIdMatch && videoIdMatch[1].length === 11) ? videoIdMatch[1] : null;
+                // 1. Send the URL to the extraction engine
+                const initResponse = await fetch(`https://p.oceansaver.in/ajax/download.php?format=${apiFormat}&url=${encodeURIComponent(urlInput)}`);
+                const initData = await initResponse.json();
 
-                if (!videoId) throw new Error("Invalid YouTube link.");
+                if (!initData.success || !initData.id) {
+                    throw new Error("Engine rejected the link. The post might be private.");
+                }
 
-                let finalDownloadUrl = null;
+                const jobId = initData.id;
+                let isFinished = false;
+                let attempts = 0;
 
-                // 2. Automated Proxy Hunting
-                for (let node of PROXY_NODES) {
-                    try {
-                        console.log(`Checking Node: ${node}`);
-                        const response = await fetch(`${node}/streams/${videoId}`);
-                        const data = await response.json();
+                // 2. Automated Polling Loop (Checks progress every 2 seconds)
+                while (!isFinished && attempts < 40) {
+                    attempts++;
+                    await new Promise(r => setTimeout(r, 2000)); // wait 2 seconds
 
-                        if (data && data.videoStreams) {
-                            if (format === 'mp3') {
-                                // Find highest quality audio
-                                const audio = data.audioStreams.find(s => s.mimeType.includes('mp4') || s.mimeType.includes('webm')) || data.audioStreams[0];
-                                if (audio) finalDownloadUrl = audio.url;
-                            } else {
-                                // Find best video that also has sound (videoOnly === false)
-                                const video = data.videoStreams.find(s => s.videoOnly === false) || data.videoStreams[0];
-                                if (video) finalDownloadUrl = video.url;
-                            }
-                            
-                            if (finalDownloadUrl) break; // Break loop if we got a link!
-                        }
-                    } catch (err) {
-                        console.log(`Node blocked, jumping to next...`);
-                        continue;
+                    const progressResponse = await fetch(`https://p.oceansaver.in/ajax/progress.php?id=${jobId}`);
+                    const progressData = await progressResponse.json();
+
+                    if (progressData.success === 1 && progressData.download_url) {
+                        // Job Done!
+                        isFinished = true;
+                        status.textContent = "✅ Success! Starting Download...";
+                        status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-teal-300 bg-teal-500/10 border-teal-500/20 shadow-[0_0_15px_rgba(45,212,191,0.1)] block transition-all";
+                        window.location.href = progressData.download_url;
+                        break;
+                    } else if (progressData.success === 0) {
+                        // Still converting, show live percentage
+                        let percent = Math.round((progressData.progress / 1000) * 100) || 0;
+                        status.textContent = `⚙️ Extracting Media: ${percent}%`;
+                    } else {
+                        throw new Error("Extraction failed mid-process.");
                     }
                 }
 
-                if (finalDownloadUrl) {
-                    status.textContent = "✅ File Secured! Downloading...";
-                    status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-teal-300 bg-teal-500/10 border-teal-500/20 shadow-[0_0_15px_rgba(45,212,191,0.1)] block";
-                    window.location.href = finalDownloadUrl;
-                } else {
-                    throw new Error("All proxy networks are currently rotating. Try again in 60 seconds.");
+                if (!isFinished) {
+                    throw new Error("Engine timed out. Please try again.");
                 }
 
             } catch (err) {
                 status.textContent = "❌ " + err.message;
-                status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-rose-400 bg-rose-500/10 border-rose-500/20 shadow-[0_0_15px_rgba(251,113,133,0.1)] block";
+                status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-rose-400 bg-rose-500/10 border-rose-500/20 shadow-[0_0_15px_rgba(251,113,133,0.1)] block transition-all";
             } finally {
                 btnText.textContent = "Extract Media";
                 btnLoader.classList.add('hidden');
