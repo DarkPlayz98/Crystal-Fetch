@@ -47,7 +47,7 @@
                 <svg class="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </div>
             <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-teal-300 tracking-tight">CrystalFetch</h1>
-            <p class="text-slate-400 text-sm mt-2 font-medium">High-Speed Decentralized Engine</p>
+            <p class="text-slate-400 text-sm mt-2 font-medium">Enterprise Core Active</p>
         </div>
 
         <div class="glass p-6 md:p-8 relative overflow-hidden">
@@ -56,7 +56,7 @@
             <div class="relative flex w-full p-1.5 mb-8 bg-slate-900/60 rounded-2xl border border-slate-700/50 cursor-pointer shadow-inner">
                 <div id="slide-bg" class="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-blue-600 to-cyan-500 rounded-xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-md"></div>
                 <button type="button" id="btn-mp4" onclick="setFormat('mp4')" class="relative flex-1 py-3 text-sm font-bold text-white z-10 transition-colors duration-300">🎥 Video (MP4)</button>
-                <button type="button" id="button" id="btn-mp3" onclick="setFormat('mp3')" class="relative flex-1 py-3 text-sm font-bold text-slate-400 z-10 transition-colors duration-300">🎵 Audio (MP3)</button>
+                <button type="button" id="btn-mp3" onclick="setFormat('mp3')" class="relative flex-1 py-3 text-sm font-bold text-slate-400 z-10 transition-colors duration-300">🎵 Audio (MP3)</button>
             </div>
 
             <form id="extract-form" onsubmit="download(event)" class="space-y-5 relative z-10">
@@ -64,7 +64,7 @@
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
                     </div>
-                    <input type="url" id="url" required placeholder="Paste media link here..." class="input-glow w-full pl-11 pr-4 py-4 bg-slate-900/60 border border-slate-700/50 rounded-2xl text-white outline-none focus:border-cyan-500 transition-all shadow-inner placeholder-slate-500 font-medium">
+                    <input type="url" id="url" required placeholder="Paste YouTube link here..." class="input-glow w-full pl-11 pr-4 py-4 bg-slate-900/60 border border-slate-700/50 rounded-2xl text-white outline-none focus:border-cyan-500 transition-all shadow-inner placeholder-slate-500 font-medium">
                 </div>
                 
                 <button type="submit" id="btn" class="group relative w-full flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold py-4 rounded-2xl transition-all shadow-lg hover:shadow-cyan-500/25 transform hover:-translate-y-0.5">
@@ -85,14 +85,6 @@
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();
         let format = 'mp4';
-
-        // 🟢 THE CLUSTER: Array of active public open-source Cobalt nodes
-        const API_NODES = [
-            'https://cobalt.moe/api/json',
-            'https://api.cobalt.foxes.one/api/json',
-            'https://cobalt.pervajax.xyz/api/json',
-            'https://k0b4lt.xyz/api/json'
-        ];
 
         function setFormat(f) {
             format = f;
@@ -118,61 +110,41 @@
             const btnIcon = document.getElementById('btn-icon');
             const btn = document.getElementById('btn');
             const status = document.getElementById('status');
-            const mediaUrl = document.getElementById('url').value;
             
-            btnText.textContent = "Bypassing Security...";
+            btnText.textContent = "Connecting to Enterprise API...";
             btnLoader.classList.remove('hidden');
             btnIcon.classList.add('hidden');
             btn.disabled = true;
             btn.classList.add('opacity-80', 'cursor-not-allowed');
             status.classList.add('hidden');
 
-            let downloadUrlFound = null;
+            try {
+                // 🟢 The secure POST request back to your own server
+                const response = await fetch('/api/extract', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: document.getElementById('url').value, format: format })
+                });
 
-            // 🟢 AUTOMATED FALLBACK LOOP
-            // If node 1 fails or returns a JWT error, it instantly jumps to node 2, 3, etc.
-            for (let i = 0; i < API_NODES.length; i++) {
-                try {
-                    console.log(`Trying cluster node: ${API_NODES[i]}`);
-                    const response = await fetch(API_NODES[i], {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            url: mediaUrl,
-                            isAudioOnly: format === 'mp3'
-                        })
-                    });
+                const data = await response.json();
 
-                    const data = await response.json();
-                    
-                    if (response.ok && data.url) {
-                        downloadUrlFound = data.url;
-                        break; // Stop loop immediately on success!
-                    }
-                } catch (err) {
-                    console.log(`Node ${i} blocked or offline. Advancing cluster...`);
-                    continue; // Seamlessly try the next server
+                if (!response.ok) throw new Error(data.error);
+
+                if (data.downloadUrl) {
+                    status.textContent = "✅ Success! Starting Download...";
+                    status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-teal-300 bg-teal-500/10 border-teal-500/20 shadow-[0_0_15px_rgba(45,212,191,0.1)] block";
+                    window.location.href = data.downloadUrl;
                 }
-            }
-
-            // Final Result Check
-            if (downloadUrlFound) {
-                status.textContent = "✅ Success! Starting Download...";
-                status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-teal-300 bg-teal-500/10 border-teal-500/20 shadow-[0_0_15px_rgba(45,212,191,0.1)] block";
-                window.location.href = downloadUrlFound;
-            } else {
-                status.textContent = "❌ Extraction cluster overloaded. Try again in a moment.";
+            } catch (err) {
+                status.textContent = "❌ " + err.message;
                 status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-rose-400 bg-rose-500/10 border-rose-500/20 shadow-[0_0_15px_rgba(251,113,133,0.1)] block";
+            } finally {
+                btnText.textContent = "Extract Media";
+                btnLoader.classList.add('hidden');
+                btnIcon.classList.remove('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-80', 'cursor-not-allowed');
             }
-
-            btnText.textContent = "Extract Media";
-            btnLoader.classList.add('hidden');
-            btnIcon.classList.remove('hidden');
-            btn.disabled = false;
-            btn.classList.remove('opacity-80', 'cursor-not-allowed');
         }
     </script>
 </body>
