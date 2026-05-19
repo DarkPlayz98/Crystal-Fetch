@@ -27,7 +27,15 @@ app.post('/api/extract', async (req, res) => {
             format: format === 'mp3' ? 'bestaudio' : 'b',
             noWarnings: true,
             preferFreeFormats: true
-        });
+                try {
+        // Runs the extractor natively inside the cloud environment
+        const rawUrl = await youtubedl(url, {
+            getUrl: true,
+            format: format === 'mp3' ? 'bestaudio' : 'b',
+            noWarnings: true,
+            preferFreeFormats: true,
+            extractorArgs: 'youtube:player_client=android' // 🟢 THE BYPASS DISGUISE
+    )};
         
         if (rawUrl) {
             console.log(`[SUCCESS] File located! Pushing to frontend.`);
