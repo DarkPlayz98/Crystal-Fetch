@@ -47,7 +47,7 @@
                 <svg class="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </div>
             <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-teal-300 tracking-tight">CrystalFetch</h1>
-            <p class="text-slate-400 text-sm mt-2 font-medium">High-Speed Client Engine</p>
+            <p class="text-slate-400 text-sm mt-2 font-medium">High-Speed Decentralized Engine</p>
         </div>
 
         <div class="glass p-6 md:p-8 relative overflow-hidden">
@@ -56,7 +56,7 @@
             <div class="relative flex w-full p-1.5 mb-8 bg-slate-900/60 rounded-2xl border border-slate-700/50 cursor-pointer shadow-inner">
                 <div id="slide-bg" class="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-blue-600 to-cyan-500 rounded-xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-md"></div>
                 <button type="button" id="btn-mp4" onclick="setFormat('mp4')" class="relative flex-1 py-3 text-sm font-bold text-white z-10 transition-colors duration-300">🎥 Video (MP4)</button>
-                <button type="button" id="btn-mp3" onclick="setFormat('mp3')" class="relative flex-1 py-3 text-sm font-bold text-slate-400 z-10 transition-colors duration-300">🎵 Audio (MP3)</button>
+                <button type="button" id="button" id="btn-mp3" onclick="setFormat('mp3')" class="relative flex-1 py-3 text-sm font-bold text-slate-400 z-10 transition-colors duration-300">🎵 Audio (MP3)</button>
             </div>
 
             <form id="extract-form" onsubmit="download(event)" class="space-y-5 relative z-10">
@@ -86,6 +86,14 @@
         document.getElementById('year').textContent = new Date().getFullYear();
         let format = 'mp4';
 
+        // 🟢 THE CLUSTER: Array of active public open-source Cobalt nodes
+        const API_NODES = [
+            'https://cobalt.moe/api/json',
+            'https://api.cobalt.foxes.one/api/json',
+            'https://cobalt.pervajax.xyz/api/json',
+            'https://k0b4lt.xyz/api/json'
+        ];
+
         function setFormat(f) {
             format = f;
             const slideBg = document.getElementById('slide-bg');
@@ -110,6 +118,7 @@
             const btnIcon = document.getElementById('btn-icon');
             const btn = document.getElementById('btn');
             const status = document.getElementById('status');
+            const mediaUrl = document.getElementById('url').value;
             
             btnText.textContent = "Bypassing Security...";
             btnLoader.classList.remove('hidden');
@@ -118,44 +127,52 @@
             btn.classList.add('opacity-80', 'cursor-not-allowed');
             status.classList.add('hidden');
 
-            try {
-                // 🟢 THE SERVERLESS BYPASS
-                // The browser directly fetches the video using your phone's trusted network.
-                const response = await fetch('https://api.cobalt.tools/', {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        url: document.getElementById('url').value,
-                        isAudioOnly: format === 'mp3'
-                    })
-                });
+            let downloadUrlFound = null;
 
-                const data = await response.json();
+            // 🟢 AUTOMATED FALLBACK LOOP
+            // If node 1 fails or returns a JWT error, it instantly jumps to node 2, 3, etc.
+            for (let i = 0; i < API_NODES.length; i++) {
+                try {
+                    console.log(`Trying cluster node: ${API_NODES[i]}`);
+                    const response = await fetch(API_NODES[i], {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            url: mediaUrl,
+                            isAudioOnly: format === 'mp3'
+                        })
+                    });
 
-                if (!response.ok) {
-                    throw new Error(data.error?.code || "Media is heavily protected or private.");
+                    const data = await response.json();
+                    
+                    if (response.ok && data.url) {
+                        downloadUrlFound = data.url;
+                        break; // Stop loop immediately on success!
+                    }
+                } catch (err) {
+                    console.log(`Node ${i} blocked or offline. Advancing cluster...`);
+                    continue; // Seamlessly try the next server
                 }
-
-                if (data.url) {
-                    status.textContent = "✅ Success! Starting Download...";
-                    status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-teal-300 bg-teal-500/10 border-teal-500/20 shadow-[0_0_15px_rgba(45,212,191,0.1)] block";
-                    window.location.href = data.url;
-                } else {
-                    throw new Error("Failed to generate a direct link.");
-                }
-            } catch (err) {
-                status.textContent = "❌ " + err.message;
-                status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-rose-400 bg-rose-500/10 border-rose-500/20 shadow-[0_0_15px_rgba(251,113,133,0.1)] block";
-            } finally {
-                btnText.textContent = "Extract Media";
-                btnLoader.classList.add('hidden');
-                btnIcon.classList.remove('hidden');
-                btn.disabled = false;
-                btn.classList.remove('opacity-80', 'cursor-not-allowed');
             }
+
+            // Final Result Check
+            if (downloadUrlFound) {
+                status.textContent = "✅ Success! Starting Download...";
+                status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-teal-300 bg-teal-500/10 border-teal-500/20 shadow-[0_0_15px_rgba(45,212,191,0.1)] block";
+                window.location.href = downloadUrlFound;
+            } else {
+                status.textContent = "❌ Extraction cluster overloaded. Try again in a moment.";
+                status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-rose-400 bg-rose-500/10 border-rose-500/20 shadow-[0_0_15px_rgba(251,113,133,0.1)] block";
+            }
+
+            btnText.textContent = "Extract Media";
+            btnLoader.classList.add('hidden');
+            btnIcon.classList.remove('hidden');
+            btn.disabled = false;
+            btn.classList.remove('opacity-80', 'cursor-not-allowed');
         }
     </script>
 </body>
