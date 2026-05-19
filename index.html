@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CrystalFetch | Native</title>
+    <title>CrystalFetch | Native Serverless</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { 
@@ -47,7 +47,7 @@
                 <svg class="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </div>
             <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-teal-300 tracking-tight">CrystalFetch</h1>
-            <p class="text-slate-400 text-sm mt-2 font-medium">Enterprise Core Active</p>
+            <p class="text-slate-400 text-sm mt-2 font-medium">Decentralized Serverless Core</p>
         </div>
 
         <div class="glass p-6 md:p-8 relative overflow-hidden">
@@ -86,6 +86,13 @@
         document.getElementById('year').textContent = new Date().getFullYear();
         let format = 'mp4';
 
+        // 🟢 The Decentralized Proxy Cluster
+        const PROXY_NODES = [
+            'https://pipedapi.kavin.rocks',
+            'https://pipedapi.tokhmi.xyz',
+            'https://api.piped.projectsegfau.lt'
+        ];
+
         function setFormat(f) {
             format = f;
             const slideBg = document.getElementById('slide-bg');
@@ -110,8 +117,9 @@
             const btnIcon = document.getElementById('btn-icon');
             const btn = document.getElementById('btn');
             const status = document.getElementById('status');
+            const urlInput = document.getElementById('url').value;
             
-            btnText.textContent = "Connecting to Enterprise API...";
+            btnText.textContent = "Routing through Proxies...";
             btnLoader.classList.remove('hidden');
             btnIcon.classList.add('hidden');
             btn.disabled = true;
@@ -119,22 +127,48 @@
             status.classList.add('hidden');
 
             try {
-                // 🟢 The secure POST request back to your own server
-                const response = await fetch('/api/extract', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: document.getElementById('url').value, format: format })
-                });
+                // 1. Extract Video ID natively in the browser
+                const videoIdMatch = urlInput.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/|.*vi=|.*u\/\w\/|embed\/|v=))([^#\&\?]*).*/);
+                const videoId = (videoIdMatch && videoIdMatch[1].length === 11) ? videoIdMatch[1] : null;
 
-                const data = await response.json();
+                if (!videoId) throw new Error("Invalid YouTube link.");
 
-                if (!response.ok) throw new Error(data.error);
+                let finalDownloadUrl = null;
 
-                if (data.downloadUrl) {
-                    status.textContent = "✅ Success! Starting Download...";
-                    status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-teal-300 bg-teal-500/10 border-teal-500/20 shadow-[0_0_15px_rgba(45,212,191,0.1)] block";
-                    window.location.href = data.downloadUrl;
+                // 2. Automated Proxy Hunting
+                for (let node of PROXY_NODES) {
+                    try {
+                        console.log(`Checking Node: ${node}`);
+                        const response = await fetch(`${node}/streams/${videoId}`);
+                        const data = await response.json();
+
+                        if (data && data.videoStreams) {
+                            if (format === 'mp3') {
+                                // Find highest quality audio
+                                const audio = data.audioStreams.find(s => s.mimeType.includes('mp4') || s.mimeType.includes('webm')) || data.audioStreams[0];
+                                if (audio) finalDownloadUrl = audio.url;
+                            } else {
+                                // Find best video that also has sound (videoOnly === false)
+                                const video = data.videoStreams.find(s => s.videoOnly === false) || data.videoStreams[0];
+                                if (video) finalDownloadUrl = video.url;
+                            }
+                            
+                            if (finalDownloadUrl) break; // Break loop if we got a link!
+                        }
+                    } catch (err) {
+                        console.log(`Node blocked, jumping to next...`);
+                        continue;
+                    }
                 }
+
+                if (finalDownloadUrl) {
+                    status.textContent = "✅ File Secured! Downloading...";
+                    status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-teal-300 bg-teal-500/10 border-teal-500/20 shadow-[0_0_15px_rgba(45,212,191,0.1)] block";
+                    window.location.href = finalDownloadUrl;
+                } else {
+                    throw new Error("All proxy networks are currently rotating. Try again in 60 seconds.");
+                }
+
             } catch (err) {
                 status.textContent = "❌ " + err.message;
                 status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-rose-400 bg-rose-500/10 border-rose-500/20 shadow-[0_0_15px_rgba(251,113,133,0.1)] block";
