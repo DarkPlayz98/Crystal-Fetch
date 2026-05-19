@@ -3,7 +3,6 @@ const path = require('path');
 const youtubedl = require('youtube-dl-exec');
 
 const app = express();
-// Cloud providers like Render use the process.env.PORT automatically
 const PORT = process.env.PORT || 10000;
 
 app.use(express.json());
@@ -26,16 +25,9 @@ app.post('/api/extract', async (req, res) => {
             getUrl: true,
             format: format === 'mp3' ? 'bestaudio' : 'b',
             noWarnings: true,
-            preferFreeFormats: true
-                try {
-        // Runs the extractor natively inside the cloud environment
-        const rawUrl = await youtubedl(url, {
-            getUrl: true,
-            format: format === 'mp3' ? 'bestaudio' : 'b',
-            noWarnings: true,
             preferFreeFormats: true,
             extractorArgs: 'youtube:player_client=android' // 🟢 THE BYPASS DISGUISE
-    )};
+        });
         
         if (rawUrl) {
             console.log(`[SUCCESS] File located! Pushing to frontend.`);
