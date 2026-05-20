@@ -3,25 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CrystalFetch | Native Serverless</title>
+    <title>CrystalFetch | Heavy-Duty Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { 
-            background-color: #0f172a; 
-            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            background-color: #020617; 
+            background-image: radial-gradient(circle at top right, #0f172a, #020617);
             color: #f8fafc; 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
         }
         .glass { 
-            background: rgba(30, 41, 59, 0.6); 
+            background: rgba(15, 23, 42, 0.7); 
             backdrop-filter: blur(20px); 
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
             border-radius: 1.5rem; 
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
+        .terminal {
+            background: #000000;
+            border: 1px solid #333;
+            border-radius: 1rem;
+            font-family: 'Courier New', Courier, monospace;
+            height: 160px;
+            overflow-y: auto;
+        }
         .input-glow:focus {
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
         }
         .loader {
             border: 3px solid rgba(255,255,255,0.1);
@@ -37,54 +45,62 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Custom scrollbar for terminal */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen p-4 flex flex-col items-center justify-center">
 
-    <main class="w-full max-w-xl mx-auto space-y-8">
+    <main class="w-full max-w-xl mx-auto space-y-6">
         <div class="text-center">
-            <div class="inline-flex items-center justify-center p-3 mb-4 rounded-full bg-slate-800/50 border border-slate-700/50 shadow-lg">
-                <svg class="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            </div>
-            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-teal-300 tracking-tight">CrystalFetch</h1>
-            <p class="text-slate-400 text-sm mt-2 font-medium">OceanSaver Engine Active</p>
+            <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 tracking-tight">CrystalFetch</h1>
+            <p class="text-slate-500 text-sm mt-1 font-bold uppercase tracking-widest">Heavy-Duty Routing Engine</p>
         </div>
 
-        <div class="glass p-6 md:p-8 relative overflow-hidden">
-            <div class="absolute -top-20 -right-20 w-40 h-40 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none"></div>
-            
-            <div class="relative flex w-full p-1.5 mb-8 bg-slate-900/60 rounded-2xl border border-slate-700/50 cursor-pointer shadow-inner">
-                <div id="slide-bg" class="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-blue-600 to-cyan-500 rounded-xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-md"></div>
-                <button type="button" id="btn-mp4" onclick="setFormat('mp4')" class="relative flex-1 py-3 text-sm font-bold text-white z-10 transition-colors duration-300">🎥 Video (MP4)</button>
-                <button type="button" id="btn-mp3" onclick="setFormat('mp3')" class="relative flex-1 py-3 text-sm font-bold text-slate-400 z-10 transition-colors duration-300">🎵 Audio (MP3)</button>
+        <div class="glass p-6 relative overflow-hidden">
+            <div class="relative flex w-full p-1.5 mb-6 bg-slate-900/80 rounded-2xl border border-slate-700/50 cursor-pointer shadow-inner">
+                <div id="slide-bg" class="absolute top-1.5 bottom-1.5 left-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl transition-transform duration-300 shadow-md"></div>
+                <button type="button" id="btn-mp4" onclick="setFormat('mp4')" class="relative flex-1 py-3 text-sm font-bold text-white z-10 transition-colors">🎥 Video (MP4)</button>
+                <button type="button" id="btn-mp3" onclick="setFormat('mp3')" class="relative flex-1 py-3 text-sm font-bold text-slate-500 z-10 transition-colors">🎵 Audio (MP3)</button>
             </div>
 
-            <form id="extract-form" onsubmit="download(event)" class="space-y-5 relative z-10">
+            <form id="extract-form" onsubmit="download(event)" class="space-y-4 relative z-10">
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                    </div>
-                    <input type="url" id="url" required placeholder="Paste YouTube link here..." class="input-glow w-full pl-11 pr-4 py-4 bg-slate-900/60 border border-slate-700/50 rounded-2xl text-white outline-none focus:border-cyan-500 transition-all shadow-inner placeholder-slate-500 font-medium">
+                    <input type="url" id="url" required placeholder="Paste YouTube link here..." class="input-glow w-full px-5 py-4 bg-slate-900/80 border border-slate-700/50 rounded-2xl text-white outline-none focus:border-cyan-400 transition-all shadow-inner placeholder-slate-600 font-medium">
                 </div>
                 
-                <button type="submit" id="btn" class="group relative w-full flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold py-4 rounded-2xl transition-all shadow-lg hover:shadow-cyan-500/25 transform hover:-translate-y-0.5">
-                    <span id="btn-text">Extract Media</span>
+                <button type="submit" id="btn" class="group relative w-full flex justify-center items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black py-4 rounded-2xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                    <span id="btn-text">ENGAGE ENGINE</span>
                     <span id="btn-loader" class="loader hidden"></span>
-                    <svg id="btn-icon" class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </button>
             </form>
+        </div>
 
-            <div id="status" class="hidden mt-5 text-center p-4 rounded-2xl text-sm font-semibold transition-all border"></div>
+        <div class="terminal p-4 w-full flex flex-col justify-start text-xs text-green-400 space-y-1 shadow-2xl" id="terminal">
+            <div class="text-slate-500">System Ready. Awaiting coordinates...</div>
         </div>
         
-        <footer class="text-center text-slate-500 text-xs font-semibold tracking-wider uppercase">
-            © <span id="year"></span> Owner Crystal Inc.
+        <footer class="text-center text-slate-600 text-xs font-bold tracking-widest uppercase">
+            © <span id="year"></span> Owner Itz_MeDark
         </footer>
     </main>
 
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();
         let format = 'mp4';
+
+        // 🟢 THE TANK: A massive decentralized array of pure APIs. No CORS proxies needed.
+        const INVIDIOUS_NODES = [
+            "https://vid.puffyan.us",
+            "https://yewtu.be",
+            "https://invidious.flokinet.to",
+            "https://invidious.slipfox.xyz",
+            "https://invidious.weblibre.org",
+            "https://invidious.nerdvpn.de",
+            "https://inv.tux.pizza"
+        ];
 
         function setFormat(f) {
             format = f;
@@ -94,86 +110,130 @@
 
             if (f === 'mp4') {
                 slideBg.style.transform = 'translateX(0)';
-                btnMp4.classList.replace('text-slate-400', 'text-white');
-                btnMp3.classList.replace('text-white', 'text-slate-400');
+                btnMp4.classList.replace('text-slate-500', 'text-white');
+                btnMp3.classList.replace('text-white', 'text-slate-500');
             } else {
                 slideBg.style.transform = 'translateX(100%)';
-                btnMp3.classList.replace('text-slate-400', 'text-white');
-                btnMp4.classList.replace('text-white', 'text-slate-400');
+                btnMp3.classList.replace('text-slate-500', 'text-white');
+                btnMp4.classList.replace('text-white', 'text-slate-500');
             }
+        }
+
+        // Custom Terminal Logger function
+        function log(message, type = "info") {
+            const term = document.getElementById('terminal');
+            const div = document.createElement('div');
+            
+            // Add timestamps for the industrial feel
+            const time = new Date().toLocaleTimeString([], { hour12: false });
+            
+            if (type === "error") div.className = "text-red-500";
+            else if (type === "success") div.className = "text-cyan-400 font-bold";
+            else if (type === "warn") div.className = "text-yellow-400";
+            
+            div.textContent = `[${time}] ${message}`;
+            term.appendChild(div);
+            term.scrollTop = term.scrollHeight; // Auto-scroll to bottom
         }
         
         async function download(e) {
             e.preventDefault();
             const btnText = document.getElementById('btn-text');
             const btnLoader = document.getElementById('btn-loader');
-            const btnIcon = document.getElementById('btn-icon');
             const btn = document.getElementById('btn');
-            const status = document.getElementById('status');
             const urlInput = document.getElementById('url').value;
             
-            // Map the format specifically for OceanSaver
-            const apiFormat = format === 'mp4' ? '720' : 'mp3';
-
-            btnText.textContent = "Booting Engine...";
+            btnText.textContent = "ROUTING...";
             btnLoader.classList.remove('hidden');
-            btnIcon.classList.add('hidden');
             btn.disabled = true;
             btn.classList.add('opacity-80', 'cursor-not-allowed');
-            status.classList.remove('hidden');
-            status.textContent = "⏳ Initializing secure connection...";
-            status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-blue-300 bg-blue-500/10 border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)] block transition-all";
+
+            log("======================================");
+            log(`Initializing CrystalFetch Sequence for ${format.toUpperCase()}`);
 
             try {
-                // 1. Send the URL to the extraction engine wrapped in the CORS Proxy
-                const initApiUrl = `https://p.oceansaver.in/ajax/download.php?format=${apiFormat}&url=${encodeURIComponent(urlInput)}`;
-                const initResponse = await fetch('https://corsproxy.io/?' + encodeURIComponent(initApiUrl));
-                const initData = await initResponse.json();
+                // 1. Extract exact Video ID to target the API directly
+                const videoIdMatch = urlInput.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/|.*vi=|.*u\/\w\/|embed\/|v=))([^#\&\?]*).*/);
+                const videoId = (videoIdMatch && videoIdMatch[1].length === 11) ? videoIdMatch[1] : null;
 
-                if (!initData.success || !initData.id) {
-                    throw new Error("Engine rejected the link. The post might be private.");
-                }
+                if (!videoId) throw new Error("Invalid URL signature detected.");
+                log(`Target Locked: ID [${videoId}]`);
 
-                const jobId = initData.id;
-                let isFinished = false;
-                let attempts = 0;
+                let finalDownloadUrl = null;
 
-                // 2. Automated Polling Loop with CORS Proxy
-                while (!isFinished && attempts < 40) {
-                    attempts++;
-                    await new Promise(r => setTimeout(r, 2000)); // wait 2 seconds
+                // 2. THE TANK LOOP: Intelligently cycles through APIs until one gives the pure file
+                for (let i = 0; i < INVIDIOUS_NODES.length; i++) {
+                    const node = INVIDIOUS_NODES[i];
+                    log(`Ping Node ${i+1}/${INVIDIOUS_NODES.length}: ${node}...`, "warn");
+                    
+                    try {
+                        // We use AbortController to kill dead nodes after 4 seconds so you don't wait forever
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-                    const progressApiUrl = `https://p.oceansaver.in/ajax/progress.php?id=${jobId}`;
-                    const progressResponse = await fetch('https://corsproxy.io/?' + encodeURIComponent(progressApiUrl));
-                    const progressData = await progressResponse.json();
+                        const response = await fetch(`${node}/api/v1/videos/${videoId}`, { signal: controller.signal });
+                        clearTimeout(timeoutId);
 
-                    if (progressData.success === 1 && progressData.download_url) {
-                        // Job Done!
-                        isFinished = true;
-                        status.textContent = "✅ Success! Starting Download...";
-                        status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-teal-300 bg-teal-500/10 border-teal-500/20 shadow-[0_0_15px_rgba(45,212,191,0.1)] block transition-all";
-                        window.location.href = progressData.download_url;
-                        break;
-                    } else if (progressData.success === 0) {
-                        // Still converting, show live percentage
-                        let percent = Math.round((progressData.progress / 1000) * 100) || 0;
-                        status.textContent = `⚙️ Extracting Media: ${percent}%`;
-                    } else {
-                        throw new Error("Extraction failed mid-process.");
+                        if (!response.ok) {
+                            log(`Node rejected connection (Status ${response.status}).`, "error");
+                            continue; // Instantly move to the next node
+                        }
+
+                        // 🟢 THIS PREVENTS THE '<' ERROR: We verify the data is actually JSON before parsing!
+                        const contentType = response.headers.get("content-type");
+                        if (!contentType || !contentType.includes("application/json")) {
+                            log(`Node returned HTML shield. Bypassing...`, "error");
+                            continue; 
+                        }
+
+                        const data = await response.json();
+
+                        if (format === 'mp4' && data.formatStreams) {
+                            // Target 720p (itag 22) or 360p (itag 18) pre-muxed video
+                            const stream = data.formatStreams.find(s => s.itag === 22) || data.formatStreams.find(s => s.itag === 18) || data.formatStreams[0];
+                            if (stream) finalDownloadUrl = stream.url;
+                        } else if (format === 'mp3' && data.adaptiveFormats) {
+                            // Target pure m4a audio (itag 140)
+                            const audio = data.adaptiveFormats.find(s => s.itag === 140) || data.adaptiveFormats.find(s => s.type.includes('audio'));
+                            if (audio) finalDownloadUrl = audio.url;
+                        }
+
+                        if (finalDownloadUrl) {
+                            log(`SUCCESS: Payload extracted from ${node}`, "success");
+                            break; // We found the link, stop the loop!
+                        } else {
+                            log(`Node had no valid media formats.`, "error");
+                        }
+
+                    } catch (err) {
+                        log(`Node timeout or offline. Advancing array...`, "error");
                     }
                 }
 
-                if (!isFinished) {
-                    throw new Error("Engine timed out. Please try again.");
+                // 3. Launch payload
+                if (finalDownloadUrl) {
+                    log(`Handshake complete. Launching file transfer...`, "success");
+                    btnText.textContent = "DOWNLOAD SECURED";
+                    
+                    // Small delay so you can read the success log
+                    setTimeout(() => {
+                        window.location.href = finalDownloadUrl;
+                        
+                        // Reset button
+                        btnText.textContent = "ENGAGE ENGINE";
+                        btnLoader.classList.add('hidden');
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-80', 'cursor-not-allowed');
+                    }, 1500);
+
+                } else {
+                    throw new Error("All array nodes failed. Video may be age-restricted or copyright blocked.");
                 }
 
             } catch (err) {
-                status.textContent = "❌ " + err.message;
-                status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-rose-400 bg-rose-500/10 border-rose-500/20 shadow-[0_0_15px_rgba(251,113,133,0.1)] block transition-all";
-            } finally {
-                btnText.textContent = "Extract Media";
+                log(`CRITICAL FAILURE: ${err.message}`, "error");
+                btnText.textContent = "ENGAGE ENGINE";
                 btnLoader.classList.add('hidden');
-                btnIcon.classList.remove('hidden');
                 btn.disabled = false;
                 btn.classList.remove('opacity-80', 'cursor-not-allowed');
             }
