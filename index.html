@@ -112,7 +112,7 @@
             const status = document.getElementById('status');
             const urlInput = document.getElementById('url').value;
             
-            // Map the format specifically for OceanSaver (720 ensures the video has audio muxed in)
+            // Map the format specifically for OceanSaver
             const apiFormat = format === 'mp4' ? '720' : 'mp3';
 
             btnText.textContent = "Booting Engine...";
@@ -121,12 +121,13 @@
             btn.disabled = true;
             btn.classList.add('opacity-80', 'cursor-not-allowed');
             status.classList.remove('hidden');
-            status.textContent = "⏳ Initializing connection...";
+            status.textContent = "⏳ Initializing secure connection...";
             status.className = "mt-5 text-center p-4 rounded-2xl text-sm font-bold text-blue-300 bg-blue-500/10 border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)] block transition-all";
 
             try {
-                // 1. Send the URL to the extraction engine
-                const initResponse = await fetch(`https://p.oceansaver.in/ajax/download.php?format=${apiFormat}&url=${encodeURIComponent(urlInput)}`);
+                // 1. Send the URL to the extraction engine wrapped in the CORS Proxy
+                const initApiUrl = `https://p.oceansaver.in/ajax/download.php?format=${apiFormat}&url=${encodeURIComponent(urlInput)}`;
+                const initResponse = await fetch('https://corsproxy.io/?' + encodeURIComponent(initApiUrl));
                 const initData = await initResponse.json();
 
                 if (!initData.success || !initData.id) {
@@ -137,12 +138,13 @@
                 let isFinished = false;
                 let attempts = 0;
 
-                // 2. Automated Polling Loop (Checks progress every 2 seconds)
+                // 2. Automated Polling Loop with CORS Proxy
                 while (!isFinished && attempts < 40) {
                     attempts++;
                     await new Promise(r => setTimeout(r, 2000)); // wait 2 seconds
 
-                    const progressResponse = await fetch(`https://p.oceansaver.in/ajax/progress.php?id=${jobId}`);
+                    const progressApiUrl = `https://p.oceansaver.in/ajax/progress.php?id=${jobId}`;
+                    const progressResponse = await fetch('https://corsproxy.io/?' + encodeURIComponent(progressApiUrl));
                     const progressData = await progressResponse.json();
 
                     if (progressData.success === 1 && progressData.download_url) {
